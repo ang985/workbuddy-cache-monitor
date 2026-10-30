@@ -13,8 +13,8 @@ examples_en:
   - "Show my cache hit rate for the last 7 days"
   - "Why was the hit rate so low on my last task"
   - "Generate a cache hit rate dashboard"
-version: 1.5.1
-changelog: "v1.5.1: 看板新增「输入 token」卡片；明细表改为限高滚动框 + 吸顶工具栏 + 拖动横向查看"
+version: 1.5.2
+changelog: "v1.5.2: 看板工作空间名改为通用短名（不依赖本机命名前缀）；package.py 兼容 git 仓库，SkillHub 包排除仓库元文件；移除已废弃的 statusline.sh"
 author: "ang985"
 allowed-tools: Read,Write,Bash,Glob
 ---
