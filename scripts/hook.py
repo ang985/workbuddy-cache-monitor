@@ -37,7 +37,7 @@ def write_statusline(sid):
     """生成状态栏文本并落盘。
 
     statusLine 最短 300ms 刷新一次，脚本不能做扫描；这里把结果预写进文件，
-    statusline.sh 只负责 cat，单次开销可压到 50ms 以内。
+    状态栏配置里只需 cat 该文件，单次开销可压到 50ms 以内。
     """
     if not sid:
         return
