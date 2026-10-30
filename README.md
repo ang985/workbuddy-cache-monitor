@@ -123,12 +123,14 @@ workbuddy-cache-monitor/
 ├── SKILL.md               技能定义与工作流（AI 读取的入口）
 ├── README.md
 ├── LICENSE
-├── references/metrics.md  指标定义与口径说明
+├── references/
+│   ├── metrics.md         指标定义与口径说明
+│   └── internals.md       实现细节与平台实测（排查用）
 └── scripts/
     ├── collect.py         增量同步日志 → SQLite
     ├── report.py          文本报告 / JSON / HTML 看板
     ├── prompt_hook.py     UserPromptSubmit 钩子（每轮注入指标）
-    ├── hook.py            Stop 钩子（仅 CLI 环境生效）
+    ├── hook.py            Stop 钩子（可选，桌面端不触发该事件）
     ├── selftest.py        自检脚本
     └── package.py         打包校验（--skillhub 生成上架用 zip）
 ```
@@ -254,12 +256,14 @@ workbuddy-cache-monitor/
 ├── SKILL.md               Skill definition and workflow (entry point for the AI)
 ├── README.md
 ├── LICENSE
-├── references/metrics.md  Metric definitions and methodology
+├── references/
+│   ├── metrics.md         Metric definitions and methodology
+│   └── internals.md       Implementation notes and platform findings
 └── scripts/
     ├── collect.py         Incremental log sync → SQLite
     ├── report.py          Text report / JSON / HTML dashboard
     ├── prompt_hook.py     UserPromptSubmit hook (per-turn metrics injection)
-    ├── hook.py            Stop hook (CLI environments only)
+    ├── hook.py            Stop hook (optional; desktop client never fires it)
     ├── selftest.py        Self-test
     └── package.py         Packaging checks (--skillhub builds the upload zip)
 ```

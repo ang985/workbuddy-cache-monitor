@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""hook.py — 挂在 Stop 事件上的入口
+"""hook.py — 挂在 Stop 事件上的入口（可选，CLI 环境）
 
 在 settings.json 中注册：
     "Stop": [{ "hooks": [{ "type": "command",
@@ -13,9 +13,13 @@
 2. 取「最近一次任务」的命中率。
 3. 仅在命中率低于阈值时通过 systemMessage 提示；否则完全静默。
 4. 任何异常都以 exit 0 退出，绝不阻塞主流程。
+
+注意：桌面客户端（如 0.8.2）不会触发 Stop 事件，此时本脚本等同不存在，
+采集由 prompt_hook.py 在 UserPromptSubmit 时完成，功能不受影响。
 """
 import json
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -23,43 +27,6 @@ from collect import sync, connect  # noqa: E402
 from report import load_tasks, summarize, LOW_HIT_THRESHOLD  # noqa: E402
 
 STATUS_DIR = Path.home() / ".workbuddy" / "cache-monitor"
-
-
-def _human(n):
-    if n >= 1e8:
-        return f"{n/1e8:.2f}亿"
-    if n >= 1e4:
-        return f"{n/1e4:.0f}万"
-    return str(n)
-
-
-def write_statusline(sid):
-    """生成状态栏文本并落盘。
-
-    statusLine 最短 300ms 刷新一次，脚本不能做扫描；这里把结果预写进文件，
-    状态栏配置里只需 cat 该文件，单次开销可压到 50ms 以内。
-    """
-    if not sid:
-        return
-    db = connect()
-    row = db.execute(
-        "SELECT COUNT(DISTINCT COALESCE(NULLIF(trace_id,''), session_id)), COUNT(*), "
-        "SUM(input), SUM(output), SUM(cache_read) FROM requests WHERE session_id=?",
-        (sid,)).fetchone()
-    db.close()
-    traces, calls, inp, outp, cr = row
-    if not calls:
-        return
-    inp, outp, cr = inp or 0, outp or 0, cr or 0
-    rate = (cr / inp * 100) if inp else 0.0
-    text = (f"{traces}轮 · {calls}次调用 "
-            f"| {_human(inp + outp)} tok · 缓存命中 {rate:.1f}%")
-    try:
-        STATUS_DIR.mkdir(parents=True, exist_ok=True)
-        (STATUS_DIR / f"statusline-{sid}.txt").write_text(text, encoding="utf-8")
-        (STATUS_DIR / "statusline-latest.txt").write_text(text, encoding="utf-8")
-    except OSError:
-        pass
 
 
 def read_payload():
@@ -91,7 +58,6 @@ def main():
 
     try:
         sync(verbose=False)
-        write_statusline(payload.get("session_id"))
     except Exception as exc:                       # 采集失败不阻塞
         print(json.dumps({"continue": True,
                           "systemMessage": f"[cache-monitor] 采集失败：{exc}"},

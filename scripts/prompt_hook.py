@@ -5,7 +5,7 @@
 为什么采集也放在这里
 --------------------
 实测（WorkBuddy 桌面版 0.8.2）：`UserPromptSubmit` 会触发，`Stop` 不触发
-（`statusline-latest.txt` 的 mtime 在整轮对话结束后始终不变）。因此不能把
+（`hook-calls.log` 始终为空）。因此不能把
 「写最新数据」的职责交给 Stop，必须由本钩子自行完成：每轮用户提交消息时，
 上一轮的全部用量已经落进日志，此刻同步即可拿到完整数据。
 
@@ -32,7 +32,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 STATE = Path.home() / ".workbuddy" / "cache-monitor"
-LATEST = STATE / "statusline-latest.txt"
 MIN_CALLS = 3           # 会话请求数不足时退回全局口径，避免首轮只有 1 条
 
 # 看板必须放在**纯 ASCII 路径**下：file:// 链接里出现中文或空格时，
@@ -217,18 +216,10 @@ def main() -> None:
     except Exception:
         pass
 
-    # 4. 落盘（供 HTML 看板与人工查看；保持与旧版同一路径）
-    line = f"cache {hit:.1f}% | {calls} calls | {human(inp)} tok"
-    try:
-        STATE.mkdir(parents=True, exist_ok=True)
-        LATEST.write_text(line, encoding="utf-8")
-    except OSError:
-        pass
-
-    # 5. 后台刷新看板（不阻塞）
+    # 4. 后台刷新看板（不阻塞）
     refresh_dashboard_async()
 
-    # 6. 注入。整行保持纯文本。
+    # 5. 注入。整行保持纯文本。
     #    桌面版聊天区不渲染 `[文本](file://...)`——会原样显示 Markdown 源码。
     #    同时标注两个口径：本会话数与看板全局数常被误认为矛盾。
     label = f"— 本会话 {hit:.1f}% · {calls} 次 | 全局 {g_hit:.1f}% —"
