@@ -33,8 +33,12 @@ REQUIRED_FIELDS = ["name", "display_name", "display_name_en", "description",
                    "description_zh", "description_en", "version", "author"]
 OPTIONAL_FIELDS = ["examples_zh", "examples_en", "allowed-tools"]
 BANNED_WORDS = ["万能", "全面", "智能助手", "一站式解决", "all your tasks", "万能工具"]
-JUNK = {".git", ".DS_Store", "__pycache__", "node_modules", ".idea", ".vscode"}
+JUNK = {".DS_Store", "__pycache__", "node_modules", ".idea", ".vscode"}
 JUNK_SUFFIX = {".pyc", ".pyo", ".zip", ".log", ".swp"}
+# 遍历时跳过，但不算冗余：技能目录被 git 托管后 .git 是正常存在的
+SKIP_DIRS = JUNK | {".git"}
+# 开源仓库元文件：只服务 GitHub，不进 SkillHub 上架包（LICENSE 无扩展名会被平台判失败）
+REPO_META = {".gitattributes", ".gitignore", "LICENSE", "LICENSE.md", "CHANGELOG.md", "NOTICE"}
 
 SECRET_PATTERNS = [
     (r"sk-[A-Za-z0-9]{16,}", "疑似 API Key"),
@@ -82,7 +86,7 @@ def parse_frontmatter(text):
 
 def iter_files(root):
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [d for d in dirnames if d not in JUNK]
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for fn in filenames:
             yield Path(dirpath) / fn
 
@@ -260,7 +264,7 @@ def build_skillhub(root, out_dir):
     target = out_dir / f"{name}-{ver}-skillhub.zip"
 
     problems = []
-    files = list(iter_files(root))
+    files = [p for p in iter_files(root) if p.name not in REPO_META]
     if len(files) > SKILLHUB_MAX_FILES:
         problems.append(f"文件数 {len(files)} 超过 {SKILLHUB_MAX_FILES}")
     total = 0
