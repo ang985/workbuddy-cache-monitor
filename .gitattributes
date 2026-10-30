@@ -1,0 +1,8 @@
+# 统一换行符：仓库内保存 LF，Windows 检出时按需转 CRLF
+* text=auto eol=lf
+
+# 二进制不参与换行转换
+*.zip binary
+*.png binary
+*.jpg binary
+*.ico binary
